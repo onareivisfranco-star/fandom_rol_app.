@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_fila_personaje.html" import fila with context %}
+{% block titulo %}Lista de personajes{% endblock %}
+{% block content %}
+{% include "_tabs_admin.html" %}
+<datalist id="lista-usuarios">{% for u in usuarios %}<option value="{{ u.username }}" data-id="{{ u.id }}">{% endfor %}</datalist>
+
+<section class="panel seccion">
+  <h1 class="titulo-seccion cursivo" style="margin-bottom:4px">{{ ico('star', 26) }}Lista de personajes</h1>
+  <p class="suave" style="margin-top:0">Todos los personajes del grupo por fandom. <b>Libre</b> = nadie lo tiene; <b>Ocupado</b> = tiene dueño.
+    Usa <b>Asignar</b> y <b>Liberar</b> en cada fila: se aplican al instante, sin recargar.</p>
+  <div class="resumen-lista">
+    <span class="estado estado-libre"><b id="tot-libres">{{ stats.libres }}</b>&nbsp;libres</span>
+    <span class="estado estado-ocupado"><b id="tot-ocupados">{{ stats.personajes }}</b>&nbsp;ocupados</span>
+    <span class="suave">{{ grupos|length }} fandom{{ '' if grupos|length == 1 else 's' }} · {{ stats.catalogo }} personajes</span>
+  </div>
+  <label class="et" for="buscar-global" style="margin-top:14px">Buscar en toda la lista (nombre, usuario asignado o fandom)</label>
+  <input id="buscar-global" class="campo" type="search" placeholder="Ej: sasuke, emilia, naruto, libre…" autocomplete="off">
+</section>
+
+<section class="panel seccion" id="panel-saliente">
+  <h2 class="cursivo" style="font-size:1.6rem;margin:0 0 4px">Usuarios salientes</h2>
+  <p class="suave" style="margin-top:0">Escribe el nombre de quien dejó el grupo para ver solo sus personajes y liberarlos de una vez.</p>
+  <input id="saliente" class="campo" style="max-width:360px" list="lista-usuarios" placeholder="Nombre del usuario…" autocomplete="off" aria-label="Usuario saliente">
+  <div id="saliente-res" class="saliente-res" aria-live="polite"></div>
+</section>
+
+<div id="acordeones" data-filtro-lista="#buscar-global">
+{% for g in grupos %}
+<details class="panel acordeon" data-grupo="{{ g.clave }}">
+  <summary>
+    <span class="acordeon-nombre">{{ g.nombre }}{% if g.clave == 'oc' %} <span class="suave">(personajes originales)</span>{% endif %}</span>
+    <span class="contadores">
+      <span class="cont cont-libres"><b data-libres>{{ g.libres }}</b> libres</span>
+      <span class="cont cont-ocupados"><b data-ocupados>{{ g.ocupados }}</b> ocupados</span>
+    </span>
+  </summary>
+  <ul class="pj-filas">
+    {% for pj in g.personajes %}{{ fila(pj, 'lista') }}{% endfor %}
+  </ul>
+  <form method="post" action="{{ url_for('admin_pj_nuevo') }}" class="agregar-pj barra-acciones">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <input type="hidden" name="fandom" value="{{ 'OC' if g.clave == 'oc' else g.nombre }}">
+    <input class="campo campo-mini" name="nombre" placeholder="Agregar a {{ g.nombre }}" required maxlength="100" aria-label="Agregar personaje a {{ g.nombre }}">
+    <button class="btn btn-neon btn-mini">{{ ico('plus', 14) }}Agregar</button>
+  </form>
+</details>
+{% else %}
+<div class="vacio">La lista está vacía. Pega abajo la lista de tu grupo o agrega un personaje.</div>
+{% endfor %}
+</div>
+<div class="vacio" id="sin-resultados" hidden>Nada coincide con la búsqueda.</div>
+
+<section class="panel seccion" style="margin-top:22px">
+  <h2 class="cursivo" style="font-size:1.6rem;margin:0 0 4px">Pegar o copiar la lista</h2>
+  <p class="suave" style="margin-top:0">Una línea por fandom, con los personajes separados por comas:
+    <code class="codigo">Naruto: Sasuke, Sakura, Kakashi</code> · <code class="codigo">OCs: Luna, Kai</code>.
+    También sirve poner <code class="codigo">Naruto:</code> y un personaje por línea. Lo nuevo se agrega como libre; lo que ya existe no se toca.</p>
+  <form method="post" action="{{ url_for('admin_lista_guardar') }}" id="form-lista" style="display:grid;gap:12px">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <textarea id="texto-lista" name="texto" class="campo" rows="10" spellcheck="false">{{ texto }}</textarea>
+    <label class="check"><input type="checkbox" name="quitar_libres" value="1" id="quitar-libres">Quitar de la lista los personajes <b>libres</b> que no aparezcan en este texto (los que tienen dueño nunca se tocan)</label>
+    <div class="fila-botones">
+      <button class="btn btn-neon">{{ ico('check', 16) }}Guardar lista</button>
+      <button type="button" class="btn btn-suave" id="copiar-lista">Copiar lista</button>
+      <span class="ayuda" id="copiado" hidden>Lista copiada</span>
+    </div>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/admin.js') }}"></script>{% endblock %}

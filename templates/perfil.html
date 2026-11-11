@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_tarjeta.html" import tarjeta with context %}
+{% block titulo %}{{ u.username }}{% endblock %}
+{% block content %}
+<a href="javascript:history.back()" class="suave volver">{{ ico('back', 16) }}Volver</a>
+<section class="panel perfil-cab">
+  {{ avatar(u, 'avatar-xl') }}
+  <div class="perfil-datos">
+    <h1 class="cursivo perfil-nombre">{{ u.username }}
+      {% if u.es_admin %}<span class="insignia {{ 'insignia-dueno' if u.es_dueno else 'insignia-admin' }}">{{ u.etiqueta_rol }}</span>{% endif %}</h1>
+    <div class="suave">Puntos de dinámica: <b class="podio-puntos">{{ u.puntos or 0 }}</b> · {{ u.personajes|length }} personaje{{ '' if u.personajes|length == 1 else 's' }}</div>
+    <p class="perfil-bio">{{ u.bio or 'Todavía no escribió nada sobre sí.' }}</p>
+  </div>
+  {% if conexion and conexion.estado == 'match' %}
+    <a class="btn btn-neon" href="{{ url_for('chat', match_id=conexion.id) }}" data-abrir-chat="{{ conexion.id }}">{{ ico('message', 18) }}Enviar mensaje</a>
+  {% elif conexion %}
+    <span class="btn btn-suave">Solicitud pendiente</span>
+  {% endif %}
+</section>
+
+<section class="panel seccion">
+  <h2 class="titulo-seccion cursivo" style="margin-bottom:16px">{{ ico('users', 24) }}Personajes de {{ u.username }}</h2>
+  {% if u.personajes %}
+    <div class="pj-grid">{% for pj in u.personajes %}{{ tarjeta(pj) }}{% endfor %}</div>
+  {% else %}
+    <div class="vacio">Todavía no tiene personajes.</div>
+  {% endif %}
+</section>
+{% endblock %}

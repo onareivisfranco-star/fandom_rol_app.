@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0724">
+  <title>{% block titulo %}{{ NOMBRE_SITIO }}{% endblock %} · Fandom Spa & Rol</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600;1,700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body data-csrf="{{ csrf_token() }}">
+{% set ep = request.endpoint %}
+<div class="app">
+  <div id="velo" class="velo"></div>
+  <aside id="menu" class="sidebar">
+    <a href="{{ url_for('home') }}" class="logo-marco" aria-label="Inicio">
+      <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="">
+    </a>
+    <div class="text-center mt-3">
+      <div class="cursivo marca-nombre">{{ NOMBRE_SITIO }} ♡</div>
+      <div class="suave" style="font-size:.85rem">{{ LEMA_SITIO }}</div>
+    </div>
+    <div class="divisor">{{ ico('sparkle', 14) }}</div>
+    <nav>
+      <a class="nav-link {{ 'activo' if ep == 'home' }}" href="{{ url_for('home') }}">{{ ico('home') }}Inicio</a>
+      {% if current_user.is_authenticated %}
+      <a class="nav-link {{ 'activo' if ep in ('personajes', 'personaje') }}" href="{{ url_for('personajes') }}">{{ ico('users') }}Personajes</a>
+      <a class="nav-link {{ 'activo' if ep in ('descubrir', 'matches', 'conexiones', 'chat') }}" href="{{ url_for('matches') if matches_nuevos else url_for('descubrir') }}">{{ ico('heart-spark') }}Matches
+        {% if matches_nuevos %}<span class="contador">{{ matches_nuevos }}</span>{% endif %}</a>
+      <a class="nav-link {{ 'activo' if ep == 'solicitados' }}" href="{{ url_for('solicitados') }}">{{ ico('search') }}Se busca
+        {% if busquedas_abiertas %}<span class="contador">{{ busquedas_abiertas }}</span>{% endif %}</a>
+      <a class="nav-link {{ 'activo' if ep in ('profile', 'perfil_usuario', 'personaje_nuevo', 'personaje_editar') }}" href="{{ url_for('profile') }}">{{ ico('user') }}Mi perfil</a>
+      {% if current_user.es_admin %}
+      <a class="nav-link {{ 'activo' if ep == 'admin' }}" href="{{ url_for('admin') }}">{{ ico('crown') }}Panel admin</a>
+      {% endif %}
+      {% else %}
+      <a class="nav-link {{ 'activo' if ep == 'login' }}" href="{{ url_for('login') }}">{{ ico('user') }}Entrar</a>
+      <a class="nav-link {{ 'activo' if ep == 'register' }}" href="{{ url_for('register') }}">{{ ico('sparkle') }}Registrarse</a>
+      {% endif %}
+    </nav>
+    <div style="margin-top:auto">
+      <div class="divisor">{{ ico('star', 12) }}</div>
+      <p class="suave text-center cursivo" style="font-size:1.05rem">Aquí todos pueden ser quien quieran ♡</p>
+    </div>
+  </aside>
+
+  <div class="contenido">
+    <header class="topbar">
+      <button id="btn-menu" class="icono-btn btn-menu" aria-label="Abrir menú">{{ ico('menu') }}</button>
+      {% set pistas = listar_pistas() %}
+      {% if pistas %}
+      <div class="reproductor" id="reproductor" data-pistas='{{ pistas|tojson|forceescape }}'>
+        <button type="button" class="icono-btn" id="mp-play" aria-label="Reproducir música ambiental" title="Música ambiental">
+          <span class="i-play">{{ ico('play', 18) }}</span><span class="i-pause">{{ ico('pause', 18) }}</span>
+        </button>
+        <span class="ondas" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span class="mp-titulo" id="mp-titulo">{{ pistas[0].titulo }}</span>
+        <button type="button" class="icono-btn mp-extra" id="mp-prev" aria-label="Canción anterior">{{ ico('prev', 16) }}</button>
+        <button type="button" class="icono-btn mp-extra" id="mp-next" aria-label="Canción siguiente">{{ ico('next', 16) }}</button>
+        <button type="button" class="icono-btn mp-extra" id="mp-sfx" aria-label="Sonidos al pulsar botones" aria-pressed="true" title="Sonidos al pulsar botones">{{ ico('sparkle', 16) }}</button>
+        <button type="button" class="icono-btn" id="mp-mute" aria-label="Silenciar" aria-pressed="false">
+          <span class="i-vol">{{ ico('volume', 18) }}</span><span class="i-mute">{{ ico('volume-off', 18) }}</span>
+        </button>
+        <input type="range" id="mp-vol" class="mp-vol" min="0" max="100" value="35" aria-label="Volumen">
+      </div>
+      {% endif %}
+      {% if current_user.is_authenticated %}
+        <button type="button" class="icono-btn" id="chat-btn" aria-label="Mensajes{% if chat_sin_leer %} ({{ chat_sin_leer }} sin leer){% endif %}" title="Mensajes" aria-controls="chat-dock" aria-expanded="false">
+          {{ ico('message', 20) }}<span class="contador contador-btn" id="chat-contador" {% if not chat_sin_leer %}hidden{% endif %}>{{ chat_sin_leer }}</span></button>
+        <a href="{{ url_for('matches') }}" class="icono-btn corazon" aria-label="Matches{% if matches_nuevos %} ({{ matches_nuevos }} nuevos){% endif %}" title="Matches">
+          {{ ico('heart-spark', 20) }}{% if matches_nuevos %}<span class="punto"></span>{% endif %}</a>
+        <a href="{{ url_for('conexiones') }}" class="icono-btn" aria-label="Solicitudes{% if solicitudes_pendientes %} ({{ solicitudes_pendientes }} nuevas){% endif %}" title="Solicitudes">
+          {{ ico('bell', 20) }}{% if solicitudes_pendientes %}<span class="punto"></span>{% endif %}</a>
+        <div class="pastilla-usuario">
+          <a href="{{ url_for('profile') }}" class="pastilla-perfil" aria-label="Mi perfil">
+            {{ avatar(current_user, 'avatar-sm') }}
+            <span class="pastilla-nombre">{{ current_user.username }}</span>
+            {% if current_user.es_admin %}<span class="insignia {{ 'insignia-dueno' if current_user.es_dueno else 'insignia-admin' }}">{{ current_user.etiqueta_rol }}</span>{% endif %}
+          </a>
+          <form method="post" action="{{ url_for('logout') }}" style="display:inline">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <button class="enlace-salir">Salir</button>
+          </form>
+        </div>
+      {% endif %}
+    </header>
+
+    <main>
+      {% with mensajes = get_flashed_messages(with_categories=true) %}
+        {% for categoria, mensaje in mensajes %}
+          <div class="aviso aviso-{{ categoria }}">{{ mensaje }}</div>
+        {% endfor %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% if current_user.is_authenticated %}
+<aside class="chat-dock" id="chat-dock" hidden role="dialog" aria-label="Mensajes">
+  <header class="chat-dock-cab">
+    <button type="button" class="icono-btn" id="chat-atras" hidden aria-label="Volver a la lista">{{ ico('back', 20) }}</button>
+    <h2 class="cursivo" id="chat-titulo">Mensajes</h2>
+    <button type="button" class="icono-btn" id="chat-cerrar" aria-label="Cerrar mensajes">{{ ico('x', 20) }}</button>
+  </header>
+  <div class="chat-lista" id="chat-lista"></div>
+  <div class="chat-hilo" id="chat-hilo" hidden>
+    <div class="chat-msgs" id="chat-msgs" aria-live="polite"></div>
+    <form class="chat-form" id="chat-form">
+      <input class="campo" id="chat-texto" maxlength="2000" autocomplete="off" placeholder="Escribe un mensaje…" aria-label="Mensaje">
+      <button class="btn btn-neon btn-sm" aria-label="Enviar mensaje">{{ ico('message', 16) }}Enviar</button>
+    </form>
+  </div>
+</aside>
+{% endif %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/sonidos.js') }}"></script>
+<script src="{{ url_for('static', filename='js/musica.js') }}"></script>
+{% if current_user.is_authenticated %}<script src="{{ url_for('static', filename='js/chat.js') }}"></script>{% endif %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

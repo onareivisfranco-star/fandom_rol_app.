@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block titulo %}Se busca{% endblock %}
+{% block content %}
+{% macro ficha(b, cerrada=false) %}
+<article class="busca-card {{ 'cerrada' if cerrada }}">
+  <span class="estado {{ 'estado-encontrado' if cerrada else 'estado-busca' }}" style="align-self:flex-start">{{ b.estado }}</span>
+  <h3 class="cursivo">{{ b.nombre }}</h3>
+  <span class="suave">{{ b.fandom }} · pide <b>{{ b.autor.username }}</b></span>
+  {% if b.descripcion %}<p>{{ b.descripcion }}</p>{% endif %}
+  {% set r = registros.get(b.id) if (registros and not cerrada) else none %}
+  {% if r %}
+    {% if r.tipo == 'equipo' %}<div class="aviso-equipo">{{ ico('check', 16) }}Ya está en el team · lo tiene <a href="{{ url_for('perfil_usuario', uid=r.pj.dueno.id) }}">{{ r.pj.dueno.username }}</a></div>
+    {% elif r.tipo == 'propio' %}<div class="aviso-equipo">{{ ico('check', 16) }}Ya lo tienes registrado</div>
+    {% else %}<div class="aviso-equipo aviso-equipo-libre">Está en la lista del grupo y está libre</div>{% endif %}
+  {% endif %}
+  <div class="fila">
+    {% if r and r.tipo == 'equipo' and b.usuario_id == current_user.id %}
+      <form method="post" action="{{ url_for('conectar', pid=r.pj.id) }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="btn btn-neon btn-sm">{{ ico('message', 16) }}Conectar con {{ r.pj.dueno.username }}</button>
+      </form>
+    {% elif r and r.tipo == 'libre' and current_user.es_admin %}
+      <form method="post" action="{{ url_for('admin_pj_asignar', pid=r.pj.id) }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="usuario" value="{{ b.autor.username }}">
+        <button class="btn btn-neon btn-sm">{{ ico('plus', 14) }}Asignar a {{ b.autor.username }}</button>
+      </form>
+    {% endif %}
+    {% if not cerrada and b.usuario_id != current_user.id and not (r and r.tipo == 'equipo') %}
+      <form method="post" action="{{ url_for('solicitud_tengo', sid=b.id) }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="btn btn-neon btn-sm">{{ ico('sparkle', 16) }}Yo lo tengo</button>
+      </form>
+    {% endif %}
+    {% if b.usuario_id == current_user.id or current_user.es_admin %}
+      <form method="post" action="{{ url_for('solicitud_estado', sid=b.id) }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="btn btn-suave btn-sm">{{ 'Volver a buscar' if cerrada else 'Ya lo encontré' }}</button>
+      </form>
+      <form method="post" action="{{ url_for('solicitud_eliminar', sid=b.id) }}"
+            onsubmit="return confirm('¿Eliminar esta búsqueda?')">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="btn btn-peligro btn-sm">Quitar</button>
+      </form>
+    {% endif %}
+  </div>
+</article>
+{% endmacro %}
+
+<section class="panel" style="margin-bottom:22px">
+  <h1 class="titulo-seccion cursivo" style="margin-bottom:6px">{{ ico('search', 26) }}Se busca</h1>
+  <p class="suave" style="margin-top:0;max-width:62ch">¿Quieres rolear con un personaje que nadie del grupo tiene todavía? Pídelo aquí.
+    Cuando alguien lo traiga, o cuando entre al grupo, se marca como encontrado y desaparece del tablón.</p>
+  <form method="post" action="{{ url_for('solicitud_nueva') }}" style="display:grid;gap:14px">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+      <div><label class="et" for="s-nombre">Personaje que buscas</label>
+        <input id="s-nombre" class="campo" name="nombre" required maxlength="100"></div>
+      <div><label class="et" for="s-fandom">Fandom o anime</label>
+        <input id="s-fandom" class="campo" name="fandom" required maxlength="100"></div>
+    </div>
+    <div><label class="et" for="s-desc">¿Qué trama o tipo de rol te gustaría? (opcional)</label>
+      <textarea id="s-desc" class="campo" name="descripcion" rows="3" maxlength="600"></textarea></div>
+    <div><button class="btn btn-neon">Pedir personaje</button>
+      <span class="ayuda" style="margin-left:10px">Máximo {{ maximo }} búsquedas abiertas por persona.</span></div>
+  </form>
+</section>
+
+<section class="panel" style="margin-bottom:22px">
+  <h2 class="titulo-seccion cursivo" style="margin-bottom:16px">Se buscan ahora</h2>
+  {% if abiertas %}
+    <div class="busca-grid">{% for b in abiertas %}{{ ficha(b) }}{% endfor %}</div>
+  {% else %}
+    <div class="vacio">Nadie está pidiendo personajes en este momento.</div>
+  {% endif %}
+</section>
+
+{% set mias_cerradas = mias|selectattr('estado', 'equalto', 'Encontrado')|list %}
+{% if mias_cerradas %}
+<section class="panel" style="margin-bottom:22px">
+  <h2 class="cursivo" style="font-size:1.6rem;margin:0 0 12px">Tus búsquedas encontradas</h2>
+  <div class="busca-grid">{% for b in mias_cerradas %}{{ ficha(b, true) }}{% endfor %}</div>
+</section>
+{% endif %}
+
+{% set otras = encontradas|rejectattr('usuario_id', 'equalto', current_user.id)|list %}
+{% if current_user.es_admin and otras %}
+<section class="panel">
+  <h2 class="cursivo" style="font-size:1.6rem;margin:0 0 12px">Encontradas (solo admins)</h2>
+  <div class="busca-grid">{% for b in otras %}{{ ficha(b, true) }}{% endfor %}</div>
+</section>
+{% endif %}
+{% endblock %}

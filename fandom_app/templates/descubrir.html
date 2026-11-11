@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block titulo %}Descubrir{% endblock %}
+{% block content %}
+{% set activa = 'descubrir' %}{% include "_tabs_matches.html" %}
+
+<section class="descubrir">
+  <aside class="panel filtros-panel">
+    <details {% if filtros_activos %}open{% endif %} class="filtros-det">
+      <summary class="filtros-resumen">{{ ico('filter', 18) }}Filtros{% if filtros_activos %}<span class="contador">{{ filtros_activos }}</span>{% endif %}</summary>
+      <form method="get" class="filtros-form">
+        <div><label class="et" for="f-fandom">Universo o fandom</label>
+          <select id="f-fandom" class="campo" name="fandom"><option value="">Todos</option>
+            {% for f in fandoms %}<option {{ 'selected' if filtros.fandom|lower == f|lower }}>{{ f }}</option>{% endfor %}</select></div>
+        <div><label class="et" for="f-tipo">Tipo de rol</label>
+          <select id="f-tipo" class="campo" name="tipo_rol"><option value="">Todos</option>
+            {% for t in TIPOS_ROL %}<option {{ 'selected' if filtros.tipo_rol == t }}>{{ t }}</option>{% endfor %}</select></div>
+        <div><label class="et" for="f-gen">Género narrativo</label>
+          <select id="f-gen" class="campo" name="genero"><option value="">Todos</option>
+            {% for g in GENEROS %}<option {{ 'selected' if filtros.genero == g }}>{{ g }}</option>{% endfor %}</select></div>
+        <div><label class="et" for="f-est">Disponibilidad</label>
+          <select id="f-est" class="campo" name="estado"><option value="">Cualquiera</option>
+            {% for e, c in ESTADOS %}<option {{ 'selected' if filtros.estado == e }}>{{ e }}</option>{% endfor %}</select></div>
+        <label class="check"><input type="checkbox" name="buscando" value="1" {{ 'checked' if filtros.buscando }}>Solo los que buscan rol</label>
+        <div class="fila-botones">
+          <button class="btn btn-neon btn-sm">Aplicar</button>
+          <a class="btn btn-suave btn-sm" href="{{ url_for('descubrir') }}">Limpiar</a>
+        </div>
+      </form>
+    </details>
+  </aside>
+
+  <div class="deck-zona">
+    <p class="suave deck-contador" id="deck-contador" aria-live="polite">{{ total }} perfil{{ '' if total == 1 else 'es' }} por descubrir</p>
+    <div class="deck {{ 'vacio' if not cartas }}" id="deck" data-accion="{{ url_for('match_accion') }}">
+      <div class="deck-vacio" id="deck-vacio">
+        <div class="deck-vacio-ico">{{ ico('sparkle', 40) }}</div>
+        <h2 class="cursivo">Por ahora no hay más perfiles</h2>
+        <p class="suave">Ya viste todos los personajes que cumplen tus filtros. Cambia los filtros o vuelve más tarde: seguro llegan nuevos.</p>
+        <div class="fila-botones" style="justify-content:center">
+          <a class="btn btn-neon btn-sm" href="{{ url_for('descubrir') }}">Quitar filtros</a>
+          <a class="btn btn-suave btn-sm" href="{{ url_for('matches') }}">Ver mis matches</a>
+        </div>
+      </div>
+      {% for pj in cartas|reverse %}
+      <article class="swipe-card" data-id="{{ pj.id }}" data-nombre="{{ pj.nombre }}">
+        <img src="{{ pj.imagen }}" alt="Imagen de {{ pj.nombre }}" draggable="false" decoding="async"
+             onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/avatar_default.svg') }}'">
+        <span class="sello sello-si">Me interesa</span>
+        <span class="sello sello-no">Pasar</span>
+        <span class="estado estado-{{ pj.clase_estado }} swipe-estado">{{ pj.estado_rol }}{% if pj.clase_estado == 'ocupado' %}{{ ico('lock', 12) }}{% endif %}</span>
+        <div class="swipe-info">
+          <h2 class="cursivo swipe-nombre">{{ pj.nombre }}</h2>
+          <p class="swipe-dueno">de <a href="{{ url_for('perfil_usuario', uid=pj.dueno.id) }}" data-nodrag>{{ avatar(pj.dueno, 'avatar-xs') }}{{ pj.dueno.username }}</a></p>
+          <div class="etiquetas-mini">
+            <span class="mini-chip">{{ pj.fandom }}</span>
+            {% if pj.genero %}<span class="mini-chip">{{ pj.genero }}</span>{% endif %}
+            {% if pj.tipo_rol %}<span class="mini-chip mini-chip-rosa">Busca: {{ pj.tipo_rol }}</span>{% endif %}
+          </div>
+          {% if pj.descripcion %}<p class="swipe-desc">{{ pj.descripcion }}</p>{% endif %}
+          <a class="swipe-ver" href="{{ url_for('personaje', pid=pj.id) }}" data-nodrag>Ver perfil del personaje</a>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    <div class="deck-botones">
+      <button type="button" class="btn btn-suave btn-grande" id="btn-pasar" data-sonido="pass">{{ ico('x', 20) }}Pasar</button>
+      <button type="button" class="btn btn-neon btn-grande" id="btn-interes" data-sonido="like">{{ ico('heart', 20) }}Me interesa</button>
+    </div>
+    <p class="ayuda ayuda-teclado" style="text-align:center">Desliza la tarjeta a la derecha (me interesa) o a la izquierda (pasar), o usa los botones. En computadora también sirven las flechas ← →.</p>
+  </div>
+</section>
+
+<div class="modal-match" id="modal-match" hidden role="dialog" aria-modal="true" aria-labelledby="mm-titulo">
+  <div class="mm-caja">
+    <i class="chispa grande" style="left:8%;top:12%;--s:3;--t:4s;--d:0s"></i>
+    <i class="chispa grande" style="left:88%;top:18%;--s:2.6;--t:5s;--d:-2s"></i>
+    <i class="chispa" style="left:80%;top:84%;--s:2;--t:4.5s;--d:-1s"></i>
+    <h2 id="mm-titulo" class="cursivo mm-titulo">¡Es un Match!</h2>
+    <p class="suave">Tú y <b id="mm-usuario"></b> quieren rolear juntos.</p>
+    <div class="mm-par">
+      <img id="mm-mio" alt="" class="mm-img"><span class="mm-corazon">{{ ico('heart', 26) }}</span><img id="mm-suyo" alt="" class="mm-img">
+    </div>
+    <p class="suave" id="mm-nombres"></p>
+    <div class="fila-botones" style="justify-content:center">
+      <a id="mm-chat" class="btn btn-neon" href="#">{{ ico('message', 18) }}Enviar mensaje</a>
+      <a id="mm-perfil" class="btn btn-suave" href="#">Ver personaje</a>
+      <button type="button" class="btn btn-linea" id="mm-seguir">Seguir explorando</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/descubrir.js') }}"></script>{% endblock %}

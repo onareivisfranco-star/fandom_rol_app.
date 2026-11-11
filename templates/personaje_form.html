@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block titulo %}{{ 'Editar personaje' if pj else 'Nuevo personaje' }}{% endblock %}
+{% block content %}
+<section class="panel" style="max-width:760px;margin:0 auto">
+  <h1 class="titulo-seccion cursivo" style="margin-bottom:18px">{{ 'Editar a ' ~ pj.nombre if pj else 'Nuevo personaje' }}</h1>
+  <form method="post" enctype="multipart/form-data" style="display:grid;gap:16px">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
+      <div>
+        <label class="et" for="nombre">Nombre del personaje</label>
+        <input id="nombre" class="campo" name="nombre" required maxlength="100" value="{{ pj.nombre if pj else request.form.get('nombre', '') }}">
+      </div>
+      <div>
+        <label class="et" for="fandom">Fandom, anime o serie (o “OC”)</label>
+        <input id="fandom" class="campo" name="fandom" required maxlength="100" value="{{ pj.fandom if pj else request.form.get('fandom', '') }}">
+      </div>
+      <div>
+        <label class="et" for="etiquetas">Etiquetas</label>
+        <input id="etiquetas" class="campo" name="etiquetas" maxlength="120" placeholder="Espía, Estratega"
+               value="{{ (pj.etiquetas or '') if pj else request.form.get('etiquetas', '') }}">
+        <div class="ayuda">Sepáralas con comas. En la tarjeta se ven las dos primeras.</div>
+      </div>
+      <div>
+        <label class="et" for="estado_rol">Estado</label>
+        <select id="estado_rol" name="estado_rol" class="campo">
+          {% for etiqueta, clase in ESTADOS %}
+            <option value="{{ etiqueta }}" {{ 'selected' if pj and pj.estado_rol == etiqueta }}>{{ etiqueta }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
+      <div>
+        <label class="et" for="genero">Género narrativo o temática preferida</label>
+        <select id="genero" name="genero" class="campo"><option value="">Sin especificar</option>
+          {% for g in GENEROS %}<option {{ 'selected' if pj and pj.genero == g }}>{{ g }}</option>{% endfor %}</select>
+      </div>
+      <div>
+        <label class="et" for="tipo_rol">Tipo de rol que buscas</label>
+        <select id="tipo_rol" name="tipo_rol" class="campo"><option value="">Sin especificar</option>
+          {% for t in TIPOS_ROL %}<option {{ 'selected' if pj and pj.tipo_rol == t }}>{{ t }}</option>{% endfor %}</select>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
+      <div>
+        <label class="et" for="avatar_file">Subir imagen desde el celular</label>
+        <input id="avatar_file" class="campo" type="file" name="avatar_file" accept="image/*">
+        <div class="ayuda">PNG, JPG, GIF o WEBP, hasta 5 MB.</div>
+      </div>
+      <div>
+        <label class="et" for="avatar_url">O pega la dirección de una imagen</label>
+        <input id="avatar_url" class="campo" name="avatar_url" placeholder="https://…">
+        <div class="ayuda">{% if pj and pj.avatar_url %}Si no cambias nada, se queda la imagen actual.{% else %}Si no pones imagen, usamos una por defecto.{% endif %}</div>
+      </div>
+    </div>
+
+    <div>
+      <label class="et" for="descripcion">Descripción y qué tipo de rol buscas</label>
+      <textarea id="descripcion" class="campo" name="descripcion" rows="5">{{ pj.descripcion if pj and pj.descripcion else request.form.get('descripcion', '') }}</textarea>
+    </div>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <button class="btn btn-neon">{{ 'Guardar cambios' if pj else 'Crear personaje' }}</button>
+      <a class="btn btn-suave" href="{{ url_for('profile') }}">Cancelar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block titulo %}Solicitudes{% endblock %}
+{% block content %}
+{% set activa = 'solicitudes' %}{% include "_tabs_matches.html" %}
+{% macro persona(f) %}
+  <div class="fila-usuario">
+    {% if f.personaje %}
+      <img src="{{ f.personaje.imagen }}" alt="" style="width:52px;height:52px;border-radius:14px;object-fit:cover"
+           onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/avatar_default.svg') }}'">
+    {% else %}{{ avatar(f.usuario, "avatar-md") }}{% endif %}
+    <div class="nombre">
+      <a href="{{ url_for('perfil_usuario', uid=f.usuario.id) }}"><b>{{ f.usuario.username }}</b></a>
+      <div class="suave" style="font-size:.85rem">{% if f.personaje %}por {{ f.personaje.nombre }}{% elif f.solicitud %}por la búsqueda de {{ f.solicitud.nombre }}{% elif f.match.personaje_id %}personaje eliminado{% else %}conexión directa{% endif %}</div>
+    </div>
+    {{ caller() }}
+  </div>
+{% endmacro %}
+
+<section class="panel" style="margin-bottom:22px">
+  <h2 class="titulo-seccion cursivo" style="margin-bottom:14px">{{ ico("bell", 24) }}Solicitudes para ti</h2>
+  {% for f in recibidas %}
+    {% call persona(f) %}
+      <form method="post" action="{{ url_for('responder_conexion', mid=f.match.id, accion='aceptar') }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button class="btn btn-neon btn-sm">Aceptar</button></form>
+      <form method="post" action="{{ url_for('responder_conexion', mid=f.match.id, accion='rechazar') }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button class="btn btn-suave btn-sm">Rechazar</button></form>
+    {% endcall %}
+  {% else %}
+    <div class="vacio">No tienes solicitudes nuevas.</div>
+  {% endfor %}
+</section>
+
+<section class="panel" style="margin-bottom:22px">
+  <h2 class="titulo-seccion cursivo" style="margin-bottom:14px">{{ ico("message", 24) }}Tus chats</h2>
+  {% for f in activas %}
+    {% call persona(f) %}<a class="btn btn-neon btn-sm" href="{{ url_for('chat', match_id=f.match.id) }}" data-abrir-chat="{{ f.match.id }}">Abrir chat</a>{% endcall %}
+  {% else %}
+    <div class="vacio">Cuando alguien acepte tu solicitud (o aceptes la suya), el chat aparece aquí.</div>
+  {% endfor %}
+</section>
+
+{% if enviadas %}
+<section class="panel">
+  <h2 class="titulo-seccion cursivo" style="margin-bottom:14px">{{ ico("sparkle", 24) }}Esperando respuesta</h2>
+  {% for f in enviadas %}{% call persona(f) %}<span class="suave">Pendiente</span>{% endcall %}{% endfor %}
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block titulo %}{{ pj.nombre }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('personajes') }}" class="suave volver">{{ ico('back', 16) }}Volver a personajes</a>
+<section class="panel" style="display:grid;grid-template-columns:minmax(220px,340px) 1fr;gap:26px">
+  <div class="pj-card" style="aspect-ratio:3/4.2">
+    <img src="{{ pj.imagen }}" alt="{{ pj.nombre }}" style="width:100%;height:100%;object-fit:cover"
+         onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/avatar_default.svg') }}'">
+  </div>
+  <div>
+    <span class="estado estado-{{ pj.clase_estado }}">{{ pj.estado_rol }}{% if pj.clase_estado == 'ocupado' %}{{ ico('lock', 12) }}{% endif %}</span>
+    <h1 class="cursivo" style="font-size:3rem;line-height:1.05;margin:10px 0 4px">{{ pj.nombre }}</h1>
+    <p class="suave" style="margin:0 0 12px">{{ pj.fandom }} · de <a class="dueno-link" href="{{ url_for('perfil_usuario', uid=pj.dueno.id) }}">{{ avatar(pj.dueno, 'avatar-xs') }}{{ pj.dueno.username }}</a></p>
+    {% if pj.lista_etiquetas or pj.genero or pj.tipo_rol %}
+      <div class="etiquetas-mini" style="margin-bottom:14px">
+        {% if pj.genero %}<span class="mini-chip">{{ pj.genero }}</span>{% endif %}
+        {% if pj.tipo_rol %}<span class="mini-chip mini-chip-rosa">Busca: {{ pj.tipo_rol }}</span>{% endif %}
+        {% for e in pj.lista_etiquetas %}<span class="mini-chip">{{ e }}</span>{% endfor %}
+      </div>
+    {% endif %}
+    <p style="white-space:pre-wrap;max-width:62ch">{{ pj.descripcion or 'Este personaje aún no tiene descripción.' }}</p>
+
+    <div style="margin-top:22px;display:flex;gap:12px;flex-wrap:wrap">
+      {% if pj.usuario_id == current_user.id %}
+        <a class="btn btn-neon" href="{{ url_for('personaje_editar', pid=pj.id) }}">Editar personaje</a>
+      {% elif conexion and conexion.estado == 'match' %}
+        <a class="btn btn-neon" href="{{ url_for('chat', match_id=conexion.id) }}" data-abrir-chat="{{ conexion.id }}">{{ ico('message', 18) }}Abrir chat</a>
+      {% elif conexion %}
+        <span class="btn btn-suave">Solicitud pendiente</span>
+      {% elif pj.clase_estado == 'ocupado' %}
+        <span class="btn btn-suave">{{ ico('lock', 16) }}Ocupado ahora</span>
+      {% else %}
+        <form method="post" action="{{ url_for('conectar', pid=pj.id) }}">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <button class="btn btn-neon">{{ ico('sparkle', 18) }}Unirse al rol</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</section>
+<style>@media(max-width:700px){section.panel[style*="grid-template-columns"]{grid-template-columns:1fr!important}}</style>
+{% endblock %}

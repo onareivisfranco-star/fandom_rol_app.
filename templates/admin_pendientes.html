@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block titulo %}Por aprobar{% endblock %}
+{% block content %}
+{% include "_tabs_admin.html" %}
+<section class="panel">
+  <h1 class="titulo-seccion cursivo" style="margin-bottom:4px">{{ ico('check', 26) }}Cuentas por aprobar ({{ pendientes|length }})</h1>
+  <p class="suave" style="margin-top:0">Estas personas se registraron con el código de invitación y esperan tu decisión. Al rechazar, la cuenta se elimina.</p>
+  {% for u in pendientes %}
+  <div class="fila-usuario">
+    {{ avatar(u, 'avatar-sm') }}
+    <div class="nombre"><b>{{ u.username }}</b><div class="suave" style="font-size:.85rem">Pendiente de aprobación</div></div>
+    <form method="post" action="{{ url_for('admin_aprobar', uid=u.id) }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button class="btn btn-neon btn-sm">{{ ico('check', 16) }}Aprobar</button>
+    </form>
+    <form method="post" action="{{ url_for('admin_rechazar', uid=u.id) }}" onsubmit="return confirm('¿Rechazar y eliminar la cuenta de {{ u.username|e }}?')">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button class="btn btn-peligro btn-sm">{{ ico('x', 16) }}Rechazar</button>
+    </form>
+  </div>
+  {% else %}
+  <div class="vacio">No hay cuentas por aprobar. Cuando alguien se registre, aparecerá aquí.</div>
+  {% endfor %}
+</section>
+{% endblock %}

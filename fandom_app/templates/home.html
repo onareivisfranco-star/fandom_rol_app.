@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% from "_tarjeta.html" import tarjeta with context %}
+{% block titulo %}Inicio{% endblock %}
+{% block content %}
+{% include "_banner.html" %}
+
+<section class="panel bienvenida">
+  <span class="bienvenida-ico">{{ ico('sparkle', 26) }}</span>
+  <div>
+    {% if current_user.is_authenticated %}
+      <div class="cursivo bienvenida-titulo">Bienvenid@, {{ current_user.username }}</div>
+      <div class="suave">Elige un personaje y únete a la aventura, o desliza en <a class="enlace" href="{{ url_for('descubrir') }}">Matches</a> para encontrar compañeros de rol.</div>
+    {% else %}
+      <div class="cursivo bienvenida-titulo">Bienvenid@ a {{ NOMBRE_SITIO }}</div>
+      <div class="suave">La plataforma de Fandom Spa & Rol para encontrar compañeros de rol sin pena.</div>
+    {% endif %}
+  </div>
+  {% if current_user.is_authenticated %}
+    <a class="btn btn-neon bienvenida-cta" href="{{ url_for('descubrir') }}">{{ ico('heart-spark', 18) }}Buscar compañeros</a>
+  {% endif %}
+</section>
+
+{% if not current_user.is_authenticated %}
+  <div class="panel" style="text-align:center">
+    <p style="margin-top:0">Para entrar necesitas el código de invitación que dan los admins en el grupo de WhatsApp.</p>
+    <div class="fila-botones" style="justify-content:center">
+      <a class="btn btn-neon" href="{{ url_for('register') }}">Registrarme con código</a>
+      <a class="btn btn-suave" href="{{ url_for('login') }}">Ya tengo cuenta</a>
+    </div>
+  </div>
+{% else %}
+<section class="panel seccion">
+  <div class="cabecera-seccion">
+    <h2 class="titulo-seccion cursivo">{{ ico('users', 24) }}Personajes disponibles</h2>
+    <div class="chips" data-filtros="#rejilla-home">
+      <button class="chip activo" data-estado="">Todos</button>
+      {% for etiqueta, clase in ESTADOS %}
+        <button class="chip" data-estado="{{ etiqueta }}">{{ etiqueta }}</button>
+      {% endfor %}
+    </div>
+  </div>
+  <div>
+    <div id="rejilla-home" class="pj-grid" data-pagina="10">
+      {% for pj in personajes %}{{ tarjeta(pj) }}{% endfor %}
+    </div>
+    <nav class="paginacion" data-paginacion="#rejilla-home" aria-label="Páginas" hidden></nav>
+    <div class="vacio vacio-filtro" {% if personajes %}hidden{% endif %}>
+      {% if personajes %}Ningún personaje tiene ese estado ahora.{% else %}
+      Todavía no hay personajes de otros roleros. <a class="enlace" href="{{ url_for('personaje_nuevo') }}">Crea el tuyo</a> y anima a tus amigos a crear los suyos.{% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="panel seccion">
+  <div class="cabecera-seccion">
+    <h2 class="titulo-seccion cursivo">{{ ico('search', 24) }}Se buscan</h2>
+    <a class="btn btn-suave btn-sm" style="margin-left:auto" href="{{ url_for('solicitados') }}">Ver todos y pedir uno</a>
+  </div>
+  {% if busquedas %}
+  <div class="busca-grid">
+    {% for b in busquedas %}
+    <a class="busca-card" href="{{ url_for('solicitados') }}">
+      <h3 class="cursivo">{{ b.nombre }}</h3>
+      <span class="suave">{{ b.fandom }} · pide {{ b.autor.username }}</span>
+      {% set r = registros.get(b.id) %}
+      {% if r and r.tipo == 'equipo' %}<span class="mini-chip mini-chip-ok">Ya está en el team</span>{% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+    <div class="vacio">Nadie está pidiendo personajes ahora. <a class="enlace" href="{{ url_for('solicitados') }}">Pide el que quieras rolear</a>.</div>
+  {% endif %}
+</section>
+
+<section class="panel seccion">
+  <h2 class="titulo-seccion cursivo" style="margin-bottom:16px">{{ ico('trophy', 24) }}Podio de la comunidad</h2>
+  {% if top_usuarios %}
+  <div class="podio">
+    {% for i in [1, 0, 2] if top_usuarios|length > i %}
+      {% set u = top_usuarios[i] %}
+      <a class="podio-item podio-{{ i + 1 }}" href="{{ url_for('perfil_usuario', uid=u.id) }}">
+        <span class="medalla medalla-{{ i + 1 }}">{{ i + 1 }}</span>
+        {{ avatar(u, 'avatar-md') }}
+        <div class="cursivo podio-nombre">{{ u.username }}</div>
+        <div class="podio-puntos">{{ u.puntos }} puntos</div>
+      </a>
+    {% endfor %}
+  </div>
+  {% else %}
+    <div class="vacio">Aún nadie tiene puntos. Participa en las dinámicas y los admins te los sumarán.</div>
+  {% endif %}
+</section>
+{% endif %}
+
+<div class="pie-gato"><img src="{{ url_for('static', filename='img/gatito.png') }}" alt=""></div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/banner.js') }}"></script>{% endblock %}

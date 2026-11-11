@@ -1,0 +1,9 @@
+{# Pestañas del panel de admin. Pasa  activa  y  stats #}
+<nav class="tabs" aria-label="Panel de admin">
+  <a class="tab {{ 'activo' if activa == 'resumen' }}" href="{{ url_for('admin') }}">{{ ico('crown', 18) }}Resumen</a>
+  <a class="tab {{ 'activo' if activa == 'roleros' }}" href="{{ url_for('admin_roleros') }}">{{ ico('users', 18) }}Roleros<span class="tab-n">{{ stats.usuarios }}</span></a>
+  <a class="tab {{ 'activo' if activa == 'pendientes' }}" href="{{ url_for('admin_pendientes') }}">{{ ico('check', 18) }}Por aprobar{% if stats.pendientes %}<span class="contador">{{ stats.pendientes }}</span>{% endif %}</a>
+  <a class="tab {{ 'activo' if activa == 'personajes' }}" href="{{ url_for('admin_personajes') }}">{{ ico('user', 18) }}Personajes por usuario</a>
+  <a class="tab {{ 'activo' if activa == 'lista' }}" href="{{ url_for('admin_lista') }}">{{ ico('star', 18) }}Lista de personajes</a>
+  <a class="tab {{ 'activo' if activa == 'busquedas' }}" href="{{ url_for('admin_busquedas') }}">{{ ico('search', 18) }}Se buscan<span class="tab-n">{{ stats.busquedas }}</span></a>
+</nav>

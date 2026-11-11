@@ -1,0 +1,52 @@
+MULTI ROLL PLAY (Fandom Spa & Rol)
+
+CÓMO ACTUALIZAR (Windows)
+1) Respalda tu carpeta actual (sobre todo instance\database.db).
+2) Copia encima TODO el contenido de la carpeta fandom_app de este zip (app.py, iconos.py, templates, static, requirements.txt).
+   No borres tu carpeta instance.
+3) python -m pip install -r requirements.txt        (no hay dependencias nuevas)
+4) python app.py     y abre http://127.0.0.1:5000
+Al primer arranque la app actualiza sola la base de datos. Antes de tocar la tabla de personajes crea una copia:
+instance\database.db.respaldo-AAAAMMDD-HHMMSS  (puedes borrarla cuando todo funcione).
+Si "flask" no se reconoce, usa:  python -m flask --app app COMANDO
+
+CUENTAS: DUEÑA DEL GRUPO Y CREADORA (mismos permisos)
+- Cambia el nombre de la cuenta "admin" por el de la dueña del grupo. Dos formas:
+    a) Con esa cuenta: Mi perfil > Editar mi perfil > Nombre de usuario.
+    b) Por consola:  python -m flask --app app renombrar-usuario admin NOMBRE_DE_LA_DUEÑA
+  Luego cámbiale la contraseña (Mi perfil > Editar mi perfil > Cambiar contraseña) antes de entregársela.
+- Tu cuenta de creadora (ya registrada y aprobada):
+    python -m flask --app app hacer-creadora TU_USUARIO
+  Se muestra con la insignia "Creadora". Tiene los mismos permisos que la dueña.
+- Si necesitas volver a nombrar a la dueña:  python -m flask --app app hacer-dueno NOMBRE
+- La dueña y la creadora nombran/quitan admins, renombran cuentas y no pueden ser suspendidas por otros admins.
+
+PANEL DE ADMIN (tarjetas que llevan a cada vista)
+- Roleros: nombres de todos los miembros, puntos, suspender, hacer/quitar admin, renombrar.
+- Por aprobar: cuentas nuevas con Aprobar o Rechazar (rechazar elimina la cuenta).
+- Personajes por usuario: cada usuario con su lista. Quitar, liberar, agregar si hubo un error al registrar, y "Liberar todos".
+- Lista de personajes (gestión): personajes por fandom, con OCs aparte; acordeones con contadores de libres y ocupados;
+  búsqueda en tiempo real; usuarios salientes con liberación masiva; botones Asignar / Liberar en cada fila sin recargar;
+  pegar o copiar la lista con el formato  Naruto: Sasuke, Sakura  /  OCs: Luna, Kai.
+- Se buscan: personajes pedidos; si ya están registrados dice "Ya está en el team".
+- Conexiones: lleva a Mis matches.
+"Libre" = personaje sin dueño (sigue en su fandom, no aparece en Descubrir ni en Personajes).
+"Liberar" lo deja libre; "Eliminar" lo borra de la lista.
+
+CHAT FLOTANTE
+- El botón de mensajes de la barra superior abre el chat en cualquier página. Suena un "tap" al enviar.
+- Los botones "Enviar mensaje" de Matches y perfiles también abren el chat flotante.
+
+MATCHES, PERFILES, BANNER, MÚSICA Y SONIDOS
+- Matches: Descubrir (deslizar o botones), Mis matches y Solicitudes. Perfiles con foto y presentación.
+- Música: pistas en static\audio. Para agregar una, copia un .mp3/.ogg/.m4a ahí (el nombre es el título:
+  04_mi_cancion.mp3 -> "Mi cancion"). Usa solo música propia o con licencia. Nunca arranca sola la primera vez.
+- Sonidos: burbuja en el menú y filtros, "tap" en botones, brillitos al hacer match, sonido al enviar mensajes.
+  El botón de destellos del reproductor los activa o desactiva; el de volumen los silencia junto con la música.
+- Banner: banner_base.jpg + mariposa_a.png y mariposa_b.png (animadas) + banner_estatico.jpg. Con "reducir movimiento"
+  activado, o con el botón de pausa del banner, todo queda quieto.
+
+OTROS AJUSTES
+- Código de invitación inicial: FANDOM2026 (cámbialo en el Panel admin).
+- Nombre y lema del sitio: NOMBRE_SITIO y LEMA_SITIO en app.py.
+- Antes de publicar, define la variable de entorno SECRET_KEY con una clave larga y propia.

@@ -1,0 +1,52 @@
+{% macro tarjeta(pj, propio=false) %}
+<div class="pj-item" data-estado="{{ pj.estado_rol }}"
+     data-texto="{{ (pj.nombre ~ ' ' ~ pj.fandom ~ ' ' ~ (pj.etiquetas or '') ~ ' ' ~ pj.dueno.username)|lower }}">
+  <article class="pj-card">
+    <a class="pj-enlace" href="{{ url_for('personaje', pid=pj.id) }}" aria-label="Ver a {{ pj.nombre }}">
+      <img src="{{ pj.imagen }}" alt="" loading="lazy"
+           onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/avatar_default.svg') }}'">
+    </a>
+    <span class="estado estado-{{ pj.clase_estado }} pj-estado">{{ pj.estado_rol }}{% if pj.clase_estado == 'ocupado' %}{{ ico('lock', 12) }}{% endif %}</span>
+    <div class="pj-info">
+      <h3 class="pj-nombre cursivo">{{ pj.nombre }}</h3>
+      <p class="pj-sub">{{ pj.fandom }}{% for e in pj.lista_etiquetas[:2] %} · {{ e }}{% endfor %}</p>
+      {% if not propio %}
+      <div class="pj-acciones">
+        {% if pj.clase_estado == 'ocupado' %}
+          <a class="btn btn-suave btn-sm btn-completo" href="{{ url_for('personaje', pid=pj.id) }}">Ver perfil</a>
+        {% elif pj.clase_estado == 'enrol' %}
+          <a class="btn btn-suave btn-sm btn-completo" href="{{ url_for('personaje', pid=pj.id) }}">Ver rol</a>
+        {% else %}
+          <form method="post" action="{{ url_for('conectar', pid=pj.id) }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <button class="btn btn-neon btn-sm btn-completo">{{ ico('sparkle', 16) }}Unirse al rol</button>
+          </form>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </article>
+  {% if propio %}
+  <div class="pj-control">
+    <form method="post" action="{{ url_for('personaje_estado', pid=pj.id) }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label class="et" for="estado-{{ pj.id }}">Estado ahora</label>
+      <select id="estado-{{ pj.id }}" name="estado_rol" class="campo" onchange="this.form.submit()">
+        {% for etiqueta, clase in ESTADOS %}
+          <option value="{{ etiqueta }}" {{ 'selected' if pj.estado_rol == etiqueta }}>{{ etiqueta }}</option>
+        {% endfor %}
+      </select>
+      <noscript><button class="btn btn-suave btn-sm" style="margin-top:6px">Guardar estado</button></noscript>
+    </form>
+    <div class="fila">
+      <a class="btn btn-suave btn-sm" style="flex:1" href="{{ url_for('personaje_editar', pid=pj.id) }}">{{ ico('edit', 16) }}Editar</a>
+      <form method="post" action="{{ url_for('personaje_eliminar', pid=pj.id) }}" style="flex:1"
+            onsubmit="return confirm('¿Eliminar a {{ pj.nombre|e }}? No se puede deshacer.')">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="btn btn-peligro btn-sm btn-completo">{{ ico('trash', 16) }}Eliminar</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endmacro %}

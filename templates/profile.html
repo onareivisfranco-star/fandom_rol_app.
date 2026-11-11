@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% from "_tarjeta.html" import tarjeta with context %}
+{% block titulo %}Mi perfil{% endblock %}
+{% block content %}
+<section class="panel perfil-cab">
+  {{ avatar(current_user, 'avatar-xl') }}
+  <div class="perfil-datos">
+    <h1 class="cursivo perfil-nombre">{{ current_user.username }}
+      {% if current_user.es_admin %}<span class="insignia {{ 'insignia-dueno' if current_user.es_dueno else 'insignia-admin' }}">{{ current_user.etiqueta_rol }}</span>{% endif %}</h1>
+    <div class="suave">Puntos de dinámica: <b class="podio-puntos">{{ current_user.puntos or 0 }}</b> · {{ personajes|length }} personaje{{ '' if personajes|length == 1 else 's' }}</div>
+    <p class="perfil-bio">{{ current_user.bio or 'Aún no escribiste nada sobre ti. Cuéntale a la comunidad qué tipo de rol te gusta.' }}</p>
+  </div>
+  <a class="btn btn-neon" href="{{ url_for('personaje_nuevo') }}">{{ ico('plus', 18) }}Nuevo personaje</a>
+</section>
+
+<section class="panel seccion">
+  <details class="filtros-det" {% if request.args.get('editar') %}open{% endif %}>
+    <summary class="filtros-resumen">{{ ico('edit', 18) }}Editar mi perfil</summary>
+    <form method="post" action="{{ url_for('perfil_editar') }}" enctype="multipart/form-data" class="form-perfil">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <div>
+        <label class="et" for="username">Nombre de usuario</label>
+        <input id="username" class="campo" name="username" value="{{ current_user.username }}" minlength="3" maxlength="40" required>
+        <div class="ayuda">Puedes cambiarlo cuando quieras; no se repite con el de nadie más.</div>
+      </div>
+      <div>
+        <label class="et" for="foto">Foto de perfil</label>
+        <input id="foto" class="campo" type="file" name="foto" accept="image/*">
+        <div class="ayuda">PNG, JPG, GIF o WEBP, hasta 5 MB. Se muestra en círculo.</div>
+        {% if current_user.foto_url %}<label class="check"><input type="checkbox" name="quitar_foto" value="1">Quitar mi foto actual</label>{% endif %}
+      </div>
+      <div>
+        <label class="et" for="bio">Sobre mí</label>
+        <textarea id="bio" class="campo" name="bio" rows="3" maxlength="300" placeholder="Qué rol te gusta, tus horarios, qué buscas…">{{ current_user.bio or '' }}</textarea>
+      </div>
+      <div><button class="btn btn-neon btn-sm">Guardar perfil</button></div>
+    </form>
+    <form method="post" action="{{ url_for('perfil_password') }}" class="form-perfil" autocomplete="off">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <h3 class="cursivo" style="font-size:1.5rem;margin:8px 0 0">Cambiar contraseña</h3>
+      <div><label class="et" for="actual">Contraseña actual</label><input id="actual" class="campo" type="password" name="actual" required autocomplete="current-password"></div>
+      <div><label class="et" for="nueva">Contraseña nueva</label><input id="nueva" class="campo" type="password" name="nueva" required minlength="6" autocomplete="new-password"></div>
+      <div><label class="et" for="repetir">Repite la contraseña nueva</label><input id="repetir" class="campo" type="password" name="repetir" required minlength="6" autocomplete="new-password"></div>
+      <div><button class="btn btn-suave btn-sm">Cambiar contraseña</button></div>
+    </form>
+  </details>
+</section>
+
+<section class="panel seccion">
+  <h2 class="titulo-seccion cursivo" style="margin-bottom:16px">{{ ico('users', 24) }}Tus personajes</h2>
+  {% if personajes %}
+    <div class="pj-grid">
+      {% for pj in personajes %}{{ tarjeta(pj, propio=true) }}{% endfor %}
+    </div>
+  {% else %}
+    <div class="vacio">Todavía no tienes personajes. <a class="enlace" href="{{ url_for('personaje_nuevo') }}">Crea el primero</a>.</div>
+  {% endif %}
+</section>
+{% endblock %}
