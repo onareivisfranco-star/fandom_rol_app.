@@ -1533,6 +1533,23 @@ with app.app_context():
     terminar_personaje()
     migrar_columnas()
 
+
+
 if __name__ == '__main__':
     # El modo debug solo se activa si lo pides (FLASK_DEBUG=1): en internet NUNCA debe estar activo.
     app.run(debug=os.environ.get('FLASK_DEBUG') == '1')
+
+# AUTOCREACIÓN DE LALITA EN LA NUBE
+with app.app_context():
+    lalita = Usuario.query.filter(func.lower(Usuario.username) == 'lalita').first()
+    if not lalita:
+        nuevo_usuario = Usuario(
+            username='Lalita',
+            password_hash=generate_password_hash('Bamospormas1'),
+            role='creator',
+            is_approved=True
+        )
+        db.session.add(nuevo_usuario)
+        db.session.commit()
+        print("¡Cuenta de Lalita creada y aprobada automáticamente!")
+   
