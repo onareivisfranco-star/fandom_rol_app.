@@ -43,7 +43,11 @@ if os.environ.get('TRAS_PROXY') == '1':     # si tu hosting usa un proxy (la may
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 db_url = os.environ.get('DATABASE_URL', 'sqlite:///database.db')
 if db_url.startswith('postgres://'):
-    db_url = db_url.replace('postgres://', 'postgresql://', 1)
+    db_url = db_url.replace('postgres://', 'postgresql+psycopg://', 1)
+elif db_url.startswith('postgresql://'):
+    db_url = db_url.replace('postgresql://', 'postgresql+psycopg://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'static', 'uploads')
