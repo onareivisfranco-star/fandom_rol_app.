@@ -41,11 +41,16 @@ app.config.update(
 if os.environ.get('TRAS_PROXY') == '1':     # si tu hosting usa un proxy (la mayoría), toma la IP y el HTTPS reales
     from werkzeug.middleware.proxy_fix import ProxyFix
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+db_url = os.environ.get('DATABASE_URL', 'sqlite:///database.db')
+if db_url.startswith('postgres://'):
+    db_url = db_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'static', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # fotos de hasta 5 MB
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_pre_ping': True, 'pool_recycle': 280}
 
 EXTENSIONES_OK = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 NOMBRE_SITIO = 'Multi Roll Play'
@@ -1012,6 +1017,8 @@ def conexiones():
 
     def fila(m):
         otro = db.session.get(Usuario, m.user2_id if m.user1_id == uid else m.user1_id)
+        if otro is None:          # usuario que ya no existe: ignorar esta conexión
+            return None
         return {'match': m, 'usuario': otro,
                 'personaje': db.session.get(Personaje, m.personaje_id) if m.personaje_id else None,
                 'solicitud': db.session.get(Solicitud, m.solicitud_id) if m.solicitud_id else None}
@@ -1525,14 +1532,15 @@ def renombrar_usuario(actual, nuevo):
     db.session.commit()
     click.echo(f'Listo: {actual} ahora se llama {u.username}.')
 
-
 with app.app_context():
-    reparar_tablas_antiguas()
-    preparar_personaje()
+    es_sqlite = db.engine.dialect.name == 'sqlite'
+    if es_sqlite:
+        reparar_tablas_antiguas()
+        preparar_personaje()
     db.create_all()
-    terminar_personaje()
-    migrar_columnas()
-
+    if es_sqlite:
+        terminar_personaje()
+        migrar_columnas()
 
 
 if __name__ == '__main__':

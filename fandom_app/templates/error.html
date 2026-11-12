@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% block titulo %}{{ titulo }}{% endblock %}
-{% block content %}
-<section class="panel" style="max-width:520px;margin:30px auto;text-align:center">
-  <h1 class="titulo-seccion cursivo">{{ titulo }}</h1>
-  <p class="suave">{{ mensaje }}</p>
-  <a class="btn btn-neon" href="{{ url_for('home') }}">Volver al inicio</a>
-</section>
-{% endblock %}

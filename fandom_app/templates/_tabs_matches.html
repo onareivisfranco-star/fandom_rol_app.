@@ -1,8 +1,0 @@
-{# Pestañas de la sección Matches. Pasa  activa = 'descubrir' | 'matches' | 'solicitudes' #}
-<nav class="tabs" aria-label="Matches">
-  <a class="tab {{ 'activo' if activa == 'descubrir' }}" href="{{ url_for('descubrir') }}">{{ ico('sparkle', 18) }}Descubrir</a>
-  <a class="tab {{ 'activo' if activa == 'matches' }}" href="{{ url_for('matches') }}">{{ ico('heart', 18) }}Mis matches
-    {% if matches_nuevos %}<span class="contador">{{ matches_nuevos }}</span>{% endif %}</a>
-  <a class="tab {{ 'activo' if activa == 'solicitudes' }}" href="{{ url_for('conexiones') }}">{{ ico('bell', 18) }}Solicitudes
-    {% if solicitudes_pendientes %}<span class="contador">{{ solicitudes_pendientes }}</span>{% endif %}</a>
-</nav>
